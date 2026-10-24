@@ -1,0 +1,11 @@
+# Example service dependencies (demo fixture; contains deliberate look-alike names)
+--extra-index-url https://pypi.acme.example/simple
+
+requests==2.32.3
+reqeusts==2.32.3            # transposed letters
+python3-dateutil==2.9.0     # combosquat seen in a 2019 incident
+jeIlyfish==1.0.1            # capital I instead of l
+flask>=3.0,<4
+urllib3>=2
+acme-billing==1.4.0         # internal package from the private index
+-r requirements-dev.txt

@@ -1,0 +1,10 @@
+# Demo configuration for the bundled example projects (fictional "acme" org).
+fail-on = "high"
+min-score = 0.6
+allow = ["pypi:requests-mock"]
+registry-fixture = "registry.json"
+
+[internal]
+names = ["acme-billing", "acme-auth"]
+patterns = ["acme-*"]
+npm-scopes = ["@acme"]

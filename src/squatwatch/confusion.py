@@ -28,7 +28,15 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 
 from squatwatch.errors import RegistryError
-from squatwatch.models import Dependency, Ecosystem, Finding, Location, Severity, SourceType
+from squatwatch.models import (
+    Dependency,
+    DependencyKind,
+    Ecosystem,
+    Finding,
+    Location,
+    Severity,
+    SourceType,
+)
 from squatwatch.names import match_key, split_scope
 from squatwatch.parsers.base import ParsedManifest
 from squatwatch.registry import RegistryClient
@@ -124,7 +132,10 @@ class ConfusionChecker:
                 continue
             key = (dep.ecosystem, match_key(name, dep.ecosystem))
             item = out.setdefault(key, _Internal(dep.ecosystem, name))
-            item.locations.append(dep.location)
+            if dep.kind is DependencyKind.LOCKED:
+                item.locations.append(dep.location)
+            else:  # prefer pointing at the manifest a human edits
+                item.locations.insert(0, dep.location)
             if dep.version:
                 item.versions.append(dep.version)
         return out

@@ -1,0 +1,32 @@
+# Trimmed demo lockfile.
+
+[[package]]
+name = "requests"
+version = "2.32.3"
+description = "Python HTTP for Humans."
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "acme-billing"
+version = "1.4.0"
+description = "Internal billing client"
+optional = false
+python-versions = ">=3.10"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.acme.example/simple"
+reference = "acme"
+
+[[package]]
+name = "acme-auth"
+version = "0.9.0"
+description = "Internal auth client (resolved from the public index: the confusion case)"
+optional = false
+python-versions = ">=3.10"
+
+[metadata]
+lock-version = "2.0"
+python-versions = "^3.11"
+content-hash = "0000000000000000000000000000000000000000000000000000000000000000"

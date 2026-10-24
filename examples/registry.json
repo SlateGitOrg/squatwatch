@@ -1,0 +1,18 @@
+{
+  "_comment": "Offline public-registry answers for the demo. Fictional: acme-billing has been registered publicly by someone else with a huge version number.",
+  "pypi": {
+    "acme-billing": {
+      "versions": [
+        "0.0.1",
+        "99.0.0"
+      ]
+    },
+    "requests": {
+      "versions": [
+        "2.31.0",
+        "2.32.3"
+      ]
+    }
+  },
+  "npm": {}
+}

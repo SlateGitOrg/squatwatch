@@ -14,6 +14,7 @@ from squatwatch.hooks.review import review_path, review_tree
 from squatwatch.hooks.tree import DirectoryTree, is_archive
 from squatwatch.models import (
     Dependency,
+    DependencyKind,
     Ecosystem,
     Finding,
     Location,
@@ -32,11 +33,17 @@ log = logging.getLogger(__name__)
 _HOOK_MANIFESTS = frozenset({"setup.py", "pyproject.toml", "package.json"})
 
 
+#: Score bands. 0.75 is where the dev-split false-positive rate falls to about
+#: 0.1% (see the sweep in eval/RESULTS.md), so findings above it gate CI by default.
+HIGH_SCORE = 0.75
+MEDIUM_SCORE = 0.65
+
+
 def severity_for_score(score: float) -> Severity:
     """Map a typosquat score to a severity band."""
-    if score >= 0.85:
+    if score >= HIGH_SCORE:
         return Severity.HIGH
-    if score >= 0.7:
+    if score >= MEDIUM_SCORE:
         return Severity.MEDIUM
     return Severity.LOW
 
@@ -150,13 +157,14 @@ class Scanner:
             groups.setdefault((dep.ecosystem, name), []).append(dep)
         findings: list[Finding] = []
         for (ecosystem, name), group in groups.items():
-            first = group[0]
-            invalid = self._validity(ecosystem, name, first.location)
+            ordered = sorted(group, key=lambda d: d.kind is DependencyKind.LOCKED)
+            locations = list(dict.fromkeys(d.location for d in ordered))
+            invalid = self._validity(ecosystem, name, locations[0])
             if invalid is not None:
                 findings.append(invalid)
             verdict = self.checker(ecosystem).check(name)
             if verdict is not None:
-                findings.append(verdict_finding(verdict, first.location, also=len(group) - 1))
+                findings.append(verdict_finding(verdict, locations[0], also=len(locations) - 1))
         return findings
 
     def check_name(self, ecosystem: Ecosystem, name: str) -> list[Finding]:
