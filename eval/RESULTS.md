@@ -76,6 +76,8 @@ Selection rule: highest dev F1 with dev FPR <= 3%. Chosen threshold 0.60; the sh
 | pypi-2019-12 | 2 | 100.0% | 2 | 100.0% | 100.0% |
 | pypi-2024-03 | 566 | 50.5% | 463 | 61.8% | 93.7% |
 | skcsirt-2017 | 10 | 50.0% | 6 | 83.3% | 80.0% |
+| **all incidents** | 628 | 49.5% | 500 | 62.2% | 93.6% |
+| **all except pypi-2024-03** | 62 | 40.3% | 37 | 67.6% | 92.0% |
 
 Missed incident names (317):
 
@@ -87,17 +89,17 @@ Missed incident names (317):
 |---|---|---|---|---|
 | `findup` | npm | 0.82 | find-up | separator |
 | `ipytest` | pypi | 0.76 | pytest | insertion |
-| `typescript-eslint-parser` | npm | 0.76 | @typescript-eslint/parser | separator, scope-flatten |
+| `typescript-eslint-parser` | npm | 0.76 | @typescript-eslint/parser | scope-flatten |
 | `uglifyjs` | npm | 0.76 | uglify-js | separator |
 | `pymantic` | pypi | 0.74 | pydantic | substitution |
 | `yaml-js` | npm | 0.74 | js-yaml | token-order |
 | `pytrie` | pypi | 0.70 | pygtrie | omission |
-| `vue-server-renderer` | npm | 0.70 | @vue/server-renderer | separator, scope-flatten |
+| `vue-server-renderer` | npm | 0.70 | @vue/server-renderer | scope-flatten |
 | `mimer` | npm | 0.70 | immer | transposition |
 | `debug-log` | npm | 0.70 | debuglog | separator |
-| `rollup-plugin-replace` | npm | 0.70 | @rollup/plugin-replace | separator, scope-flatten |
+| `rollup-plugin-replace` | npm | 0.70 | @rollup/plugin-replace | scope-flatten |
 | `file-save` | npm | 0.70 | file-saver | omission |
-| `babel-plugin-transform-react-constant-elements` | npm | 0.70 | @babel/plugin-transform-react-constant-elements | separator, scope-flatten |
+| `babel-plugin-transform-react-constant-elements` | npm | 0.70 | @babel/plugin-transform-react-constant-elements | scope-flatten |
 | `string` | npm | 0.70 | astring | omission |
 | `pyinvoke` | pypi | 0.69 | invoke | combo, edit-2 |
 | `http2-proxy` | npm | 0.69 | http-proxy | insertion, combo |

@@ -12,7 +12,7 @@ queries the name checker needs in sub-millisecond time:
 *character-count filter*: every OSA operation changes the multiset of characters
 by at most 2 in L1 norm (insert/delete 1, substitute 2, transpose 0), so
 ``osa(a, b) >= L1(count(a) - count(b)) / 2``. One vectorised numpy pass over an
-``N x 41`` count matrix (plus a length filter ``|len(a)-len(b)| <= k``) leaves a
+``N x 42`` count matrix (plus a length filter ``|len(a)-len(b)| <= k``) leaves a
 few dozen candidates, which are verified with the banded OSA. The filter can only
 discard pairs that are provably farther than ``k``, so results equal brute force
 (this is property-tested).

@@ -353,6 +353,25 @@ def _table(header: Sequence[str], rows: Iterable[Sequence[object]]) -> list[str]
     return out
 
 
+def _incident_row(
+    name: str,
+    v: Sequence[Scored],
+    threshold: float,
+    in_snapshot: Callable[[EvalItem], bool],
+) -> tuple[str, ...]:
+    known = [s for s in v if in_snapshot(s.item)]
+    hit = [s for s in v if s.score >= threshold]
+    known_recall = sum(s.score >= threshold for s in known) / len(known) if known else None
+    return (
+        name,
+        str(len(v)),
+        _pct(len(hit) / len(v)),
+        str(len(known)),
+        _pct(known_recall) if known_recall is not None else "n/a",
+        _pct(sum(target_correct(s) for s in hit) / len(hit)) if hit else "n/a",
+    )
+
+
 def render_markdown(
     scored: Sequence[Scored],
     *,
@@ -441,22 +460,13 @@ def render_markdown(
     for s in test:
         if s.item.source.startswith("incident:"):
             by_inc[s.item.source.removeprefix("incident:")].append(s)
-    inc_rows = []
-    for inc, v in sorted(by_inc.items()):
-        known = [s for s in v if in_snapshot(s.item)]
-        hit = [s for s in v if s.score >= shipped_threshold]
-        inc_rows.append(
-            (
-                inc,
-                len(v),
-                _pct(len(hit) / len(v)),
-                f"{len(known)}",
-                _pct(sum(s.score >= shipped_threshold for s in known) / len(known))
-                if known
-                else "n/a",
-                _pct(sum(target_correct(s) for s in hit) / len(hit)) if hit else "n/a",
-            )
-        )
+    groups = sorted(by_inc.items())
+    largest = max(groups, key=lambda kv: len(kv[1]))[0] if groups else ""
+    groups.append(("**all incidents**", [s for _, v in groups for s in v]))
+    groups.append(
+        (f"**all except {largest}**", [s for k, v in by_inc.items() if k != largest for s in v])
+    )
+    inc_rows = [_incident_row(name, v, shipped_threshold, in_snapshot) for name, v in groups if v]
     lines += _table(
         [
             "incident",

@@ -321,15 +321,21 @@ class NameChecker:
         budget = allowed_distance(len(key))
         for entry, dist in self.index.within(key, budget):
             ops = edit_script(entry.key, key)
-            yield entry, self._classify_edits(entry, dist, ops)
+            yield entry, self._classify_edits(entry, key, dist, ops)
 
-    def _classify_edits(self, entry: PopularEntry, dist: int, ops: list[EditOp]) -> Signal:
+    def _classify_edits(
+        self, entry: PopularEntry, key: str, dist: int, ops: list[EditOp]
+    ) -> Signal:
         target = entry.key
         kinds = [_technique_of(op, target) for op in ops]
         described = "; ".join(_describe(op) for op in ops)
         if all(k == "separator" for k in kinds):
-            detail = f"separator: {described} of {entry.name!r}"
-            return Signal("separator", _BASE_WEIGHT["separator"], detail)
+            # Only separators changed. If that turns a scoped target into a flat
+            # name it is the scope-flattening trick (same weight, SW104).
+            flattened = target.startswith("@") and not key.startswith("@")
+            technique = "scope-flatten" if flattened else "separator"
+            detail = f"{technique}: {described} of {entry.name!r}"
+            return Signal(technique, _BASE_WEIGHT["separator"], detail)
         if dist >= 2 or len(ops) != 1:
             detail = f"{dist} edits from {entry.name!r}: {described}"
             return Signal("edit-2", _BASE_WEIGHT["edit-2"], detail)
