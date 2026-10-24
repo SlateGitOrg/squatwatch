@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from squatwatch.models import Dependency, Ecosystem, Location
@@ -46,6 +47,19 @@ class ParsedManifest:
     build: BuildBackend | None = None
     errors: list[str] = field(default_factory=list)
     included: list[str] = field(default_factory=list)
+
+
+_LEADING_NAME = re.compile(r"^\s*([^\s\[\];<>=!~@(),]+)")
+
+
+def non_ascii_name(spec: str) -> str | None:
+    """Leading project name of a requirement string, if it contains non-ASCII
+    characters. PEP 508 rejects such names, but they are exactly the homoglyph
+    tricks worth reporting, so parsers keep them instead of dropping the line."""
+    m = _LEADING_NAME.match(spec)
+    if m is None or m.group(1).isascii():
+        return None
+    return m.group(1)
 
 
 class LineFinder:

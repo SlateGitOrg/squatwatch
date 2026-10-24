@@ -13,7 +13,7 @@ from pathlib import Path
 from packaging.requirements import InvalidRequirement, Requirement
 
 from squatwatch.models import Dependency, DependencyKind, Ecosystem, Location, SourceType
-from squatwatch.parsers.base import ParsedManifest
+from squatwatch.parsers.base import ParsedManifest, non_ascii_name
 
 _KEYWORDS: dict[str, DependencyKind] = {
     "install_requires": DependencyKind.RUNTIME,
@@ -92,6 +92,14 @@ def _add(result: ParsedManifest, spec: str, line: int, kind: DependencyKind, pat
     try:
         req = Requirement(spec)
     except InvalidRequirement as exc:
+        odd = non_ascii_name(spec)
+        if odd is not None:
+            result.dependencies.append(
+                Dependency(
+                    name=odd, ecosystem=Ecosystem.PYPI, location=Location(path, line), kind=kind
+                )
+            )
+            return
         result.errors.append(f"{path}:{line}: invalid requirement {spec!r}: {exc}")
         return
     result.dependencies.append(

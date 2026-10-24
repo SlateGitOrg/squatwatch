@@ -10,7 +10,13 @@ from typing import Any
 from packaging.requirements import InvalidRequirement, Requirement
 
 from squatwatch.models import Dependency, DependencyKind, Ecosystem, Location, SourceType
-from squatwatch.parsers.base import BuildBackend, IndexSetting, LineFinder, ParsedManifest
+from squatwatch.parsers.base import (
+    BuildBackend,
+    IndexSetting,
+    LineFinder,
+    ParsedManifest,
+    non_ascii_name,
+)
 
 
 def parse_pyproject(path: Path) -> ParsedManifest:
@@ -79,6 +85,14 @@ class _PyprojectParser:
         try:
             req = Requirement(spec)
         except InvalidRequirement as exc:
+            odd = non_ascii_name(spec)
+            if odd is not None:
+                self.result.dependencies.append(
+                    Dependency(
+                        name=odd, ecosystem=Ecosystem.PYPI, location=self.loc(spec), kind=kind
+                    )
+                )
+                return
             line = self.lines.find(spec)
             self.result.errors.append(
                 f"{self.path}:{line or '?'}: invalid requirement {spec!r}: {exc}"

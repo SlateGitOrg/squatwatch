@@ -16,7 +16,7 @@ from pathlib import Path
 from packaging.requirements import InvalidRequirement, Requirement
 
 from squatwatch.models import Dependency, DependencyKind, Ecosystem, Location, SourceType
-from squatwatch.parsers.base import IndexSetting, ParsedManifest
+from squatwatch.parsers.base import IndexSetting, ParsedManifest, non_ascii_name
 
 log = logging.getLogger(__name__)
 
@@ -160,6 +160,11 @@ def _parse_requirement_line(
     try:
         req = Requirement(spec)
     except InvalidRequirement as exc:
+        odd = non_ascii_name(spec)
+        if odd is not None:
+            return Dependency(
+                name=odd, ecosystem=Ecosystem.PYPI, location=loc, spec=spec, kind=kind
+            )
         result.errors.append(f"{loc}: invalid requirement {spec!r}: {exc}")
         return None
     source = SourceType.REGISTRY if req.url is None else _source_type_for_url(req.url)
