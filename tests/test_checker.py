@@ -130,6 +130,8 @@ def test_allowed_distance_bands() -> None:
 def test_bundled_snapshot_flags_documented_incident_names(
     bundled_pypi: NameChecker, bundled_npm: NameChecker
 ) -> None:
+    """Regression cases for documented attacks. These incident names are listed in
+    data/eval/dev-exposed.txt and therefore excluded from the held-out evaluation."""
     for name in ("jeIlyfish", "python3-dateutil", "colourama", "dajngo", "urlib3", "setup-tools"):
         assert bundled_pypi.check(name) is not None, name
     for name in ("crossenv", "electorn", "twilio-npm", "jquery.js", "mongose"):

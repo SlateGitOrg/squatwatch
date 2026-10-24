@@ -1,0 +1,31 @@
+# Historical incident names that were visible during development, so they are
+# NOT held out. `squatwatch eval` moves them to the "exposed" split: they are
+# excluded from every headline result and reported in a separate section.
+#
+# Rule: an incident name is exposed if it appears in code, tests, demo fixtures
+# or rule examples, i.e. anywhere it could have shaped the detector:
+# src/squatwatch (outside data/ and hooks/), tests/, examples/, scripts/demo.sh,
+# scripts/build_archives.py, docs/RULES.md. Prose that only explains evaluation
+# results (README, DATA.md, DECISIONS.md) does not count, because excluding the
+# misses discussed there would inflate recall.
+# tests/test_evaluation.py::test_dev_exposed_list_is_complete enforces the rule.
+#
+# One name per line; text after '#' is the reason.
+babelcli          # npm-hacktask-2017; docs/RULES.md SW104 example
+colourama         # pypi-2018-10; tests, examples/webapp-py
+cross-env.js      # npm-hacktask-2017; tests/test_checker.py
+crossenv          # npm-hacktask-2017; tests, examples/webapp-js, demo
+dajngo            # pypi-2018-10; tests/test_checker.py
+djanga            # pypi-2018-10; tests, checker.py docstring, RULES.md
+electorn          # npm-2020-09; tests/test_checker.py
+jeIlyfish         # pypi-2019-12; tests, examples/webapp-py, checker/homoglyph docstrings
+jquery.js         # npm-hacktask-2017; tests, RULES.md
+mongose           # npm-hacktask-2017; tests/test_checker.py
+mysqljs           # npm-hacktask-2017; checker.py glued-affix comment
+noderequest       # npm-hacktask-2017; checker.py glued-affix comment
+nodesass          # npm-hacktask-2017; tests
+python3-dateutil  # pypi-2019-12; tests, examples/webapp-py, checker.py docstring, demo
+setup-tools       # skcsirt-2017; tests, RULES.md
+tensoflw          # pypi-2024-03; tests/test_checker.py, RULES.md
+twilio-npm        # npm-2020-11; tests, checker.py docstring, RULES.md
+urlib3            # skcsirt-2017; tests, checker.py docstring, RULES.md

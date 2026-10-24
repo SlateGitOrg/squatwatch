@@ -183,8 +183,15 @@ Data provenance: [DATA.md](DATA.md).
 
 - **Historical incidents** — 628 malicious typosquat names from 8 documented
   incidents (npm 2017 "hacktask", SK-CSIRT 2017, PyPI 2018/2019, Sonatype 2020,
-  IconBurst 2022, the March 2024 PyPI campaign). **All held out**; none were used
-  for tuning.
+  IconBurst 2022, the March 2024 PyPI campaign). None were used to choose the
+  threshold, but **18 of them were visible during development**: they are
+  examples in unit tests, demo fixtures, docstrings or the rule reference (e.g.
+  `urlib3`, `jeIlyfish`, `python3-dateutil`, `crossenv`, `twilio-npm`,
+  `tensoflw`), and some features were written with them in view. Those 18 are
+  listed in [`data/eval/dev-exposed.txt`](data/eval/dev-exposed.txt) and
+  **excluded from every result below**; 610 incident names remain held out. A
+  test fails if an incident name is used in code, tests or fixtures without being
+  listed.
 - **Benign** — 6,338 real packages ranked just *below* the snapshot cutoff
   (widely used, never seen by the detector), split dev/test by hash.
 - **Generated** — synthetic squats of 400 popular names per ecosystem across 11
@@ -196,27 +203,34 @@ false-positive rate ≤ 3%". Held-out **test** results at that threshold:
 
 | test subset | precision | recall | F1 | FPR |
 |---|---|---|---|---|
-| all (incidents + generated vs benign) | 97.6% | 84.1% | 0.903 | 2.6% |
-| **historical incidents vs benign** | 79.1% | **49.5%** | 0.609 | 2.6% |
+| all (incidents + generated vs benign) | 97.5% | 84.1% | 0.903 | 2.6% |
+| **historical incidents vs benign** | 78.3% | **48.5%** | 0.599 | 2.6% |
 | generated variants vs benign | 97.3% | 90.7% | 0.939 | 2.6% |
 
 | historical incident (test) | names | recall | recall when the imitated package is in the snapshot |
 |---|---|---|---|
-| all incidents | 628 | 49.5% | 62.2% (of 500) |
-| all except the 2024 campaign | 62 | 40.3% | 67.6% (of 37) |
-| PyPI Oct 2018 (`colourama`, `djanga`…) / Dec 2019 (`jeIlyfish`…) | 5 / 2 | 100% / 100% | 100% / 100% |
-| npm 2017 hacktask (`crossenv`, `jquery.js`…) | 38 | 26.3% | 50.0% |
-| PyPI March 2024 campaign | 566 | 50.5% | 61.8% |
+| all incidents (held out) | 610 | 48.5% | 61.4% (of 482) |
+| **all except the 2024 campaign** | 45 | **22.2%** | 50.0% (of 20) |
+| PyPI Oct 2018 (`diango`, `djago`) | 2 | 100% | 100% |
+| npm 2017 hacktask | 30 | 13.3% | 33.3% |
+| PyPI March 2024 campaign | 565 | 50.6% | 61.9% |
+| *development-exposed names (not held out, for reference only)* | *18* | *83.3%* | *83.3% (of 18)* |
 
-When an incident name is flagged, the predicted target matches the labelled one
-93.6% of the time. Read these numbers with the caveats below: precision depends
+The older incidents are where the exposure mattered: with the 17 older
+development-exposed names included, "all except the 2024 campaign" read 40.3%
+(62 names) and PyPI Oct 2018 / Dec 2019 read 100% / 100%. Those figures partly
+measured names the detector was developed against, so they are no longer quoted.
+The 2024 campaign has one exposed name (`tensoflw`, which is missed), so the
+headline incident recall barely moves (49.5% with exposed names, 48.5% without).
+When a held-out incident name is flagged, the predicted target matches the
+labelled one 93.6% of the time. Read these numbers with the caveats below: precision depends
 on the (arbitrary) ratio of malicious to benign names in the set — the FPR is
 the number that transfers — and roughly half of real squats are two edits away
 or imitate packages outside the snapshot, which this design deliberately trades
-for a low false-positive rate. One evaluation-process caveat is disclosed in
-[DECISIONS.md](DECISIONS.md): the first run's held-out results were seen before
+for a low false-positive rate. Besides the development-exposed names above, one
+more evaluation-process caveat is disclosed in [DECISIONS.md](DECISIONS.md): the first run's held-out results were seen before
 the generator gained substitution/double-edit families (incident recall moved
-49.0% → 49.5%).
+49.0% → 49.5%, both measured on all 628 names including the exposed ones).
 
 ## Benchmarks
 

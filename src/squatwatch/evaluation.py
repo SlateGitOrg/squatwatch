@@ -3,8 +3,11 @@
 Data (all names only, see DATA.md):
 
 * **incidents** — malicious names from documented incidents
-  (``data/eval/incidents.csv``). They are *all* held out in the test split and
-  were never used to choose weights or the threshold.
+  (``data/eval/incidents.csv``). They are in the test split and were never used
+  to choose the threshold. The few that were visible during development (used as
+  examples in tests, fixtures, docstrings or rule docs, listed in
+  ``data/eval/dev-exposed.txt``) go to a separate ``exposed`` split instead: they
+  are excluded from every headline number and reported on their own.
 * **generated** — synthetic squats of popular names, one per technique, made by
   :func:`generate_variants`. The split is by *target*, so a target's variants
   never straddle dev and test.
@@ -21,7 +24,7 @@ import csv
 import hashlib
 import random
 from collections import Counter, defaultdict
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -33,6 +36,9 @@ from squatwatch.popular import PopularIndex
 from squatwatch.text.keyboard import neighbours
 
 SPLIT_SALT = "squatwatch-eval-v1"
+#: Split for incident names seen during development (not held out).
+EXPOSED_SPLIT = "exposed"
+EXPOSED_FILE = "dev-exposed.txt"
 TECHNIQUES: tuple[str, ...] = (
     "omission",
     "repetition",
@@ -113,8 +119,22 @@ def split_of(key: str) -> str:
 # ------------------------------------------------------------------- loading
 
 
-def load_incidents(path: Path) -> list[EvalItem]:
-    """Typosquat rows of the incidents CSV, all in the test split."""
+def load_exposed(path: Path) -> frozenset[str]:
+    """Names in a development-exposed list (one per line, ``#`` comments).
+    A missing file means no names are exposed."""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        return frozenset()
+    except OSError as exc:
+        raise DataError(f"cannot read exposed-name list {path}: {exc}") from exc
+    names = (ln.split("#", 1)[0].strip() for ln in lines)
+    return frozenset(n for n in names if n)
+
+
+def load_incidents(path: Path, exposed: Collection[str] = frozenset()) -> list[EvalItem]:
+    """Typosquat rows of the incidents CSV: test split, or ``exposed`` for names
+    in ``exposed``."""
     try:
         with path.open(encoding="utf-8", newline="") as fh:
             rows = list(csv.DictReader(fh))
@@ -136,7 +156,7 @@ def load_incidents(path: Path) -> list[EvalItem]:
                 target=row.get("target", ""),
                 technique="historical",
                 source=f"incident:{row.get('incident', '?')}",
-                split="test",
+                split=EXPOSED_SPLIT if row["name"] in exposed else "test",
             )
         )
     return items
@@ -268,7 +288,8 @@ def generate_variants(
 
 def build_dataset(data_dir: Path, indexes: dict[Ecosystem, PopularIndex]) -> list[EvalItem]:
     """Incidents + generated variants + benign names for both ecosystems."""
-    incidents = load_incidents(data_dir / "incidents.csv")
+    exposed = load_exposed(data_dir / EXPOSED_FILE)
+    incidents = load_incidents(data_dir / "incidents.csv", exposed)
     items: list[EvalItem] = list(incidents)
     for eco in Ecosystem:
         benign = load_benign(data_dir / f"benign-{eco.value}.txt", eco)
@@ -372,6 +393,53 @@ def _incident_row(
     )
 
 
+def _exposed_section(
+    scored: Sequence[Scored],
+    threshold: float,
+    in_snapshot: Callable[[EvalItem], bool],
+) -> list[str]:
+    exposed = sorted(
+        (s for s in scored if s.item.split == EXPOSED_SPLIT), key=lambda s: s.item.name
+    )
+    if not exposed:
+        return []
+    incidents = [
+        s
+        for s in scored
+        if s.item.source.startswith("incident:") and s.item.split in ("test", EXPOSED_SPLIT)
+    ]
+    lines = [
+        "",
+        f"## Development-exposed incident names ({len(exposed)}), excluded from all results above",
+        "",
+        f"These names appear in tests, fixtures, docstrings or rule examples "
+        f"(`{EXPOSED_FILE}`), so they are not held out. Their recall is biased upward "
+        "and is shown only for transparency.",
+        "",
+    ]
+    lines += _table(
+        [
+            "set",
+            "names",
+            "recall",
+            "target in snapshot",
+            "recall (target in snapshot)",
+            "target correct (of flagged)",
+        ],
+        [
+            _incident_row("development-exposed only", exposed, threshold, in_snapshot),
+            _incident_row("all incidents incl. exposed", incidents, threshold, in_snapshot),
+        ],
+    )
+    lines += ["", "| name | incident | score | flagged |", "|---|---|---|---|"]
+    lines += [
+        f"| `{s.item.name}` | {s.item.source.removeprefix('incident:')} | {s.score:.2f} | "
+        f"{'yes' if s.score >= threshold else 'no'} |"
+        for s in exposed
+    ]
+    return lines
+
+
 def render_markdown(
     scored: Sequence[Scored],
     *,
@@ -455,7 +523,11 @@ def render_markdown(
         ],
     )
 
-    lines += ["", "## Historical incidents (all held out)", ""]
+    lines += [
+        "",
+        "## Historical incidents (held out; development-exposed names excluded)",
+        "",
+    ]
     by_inc: dict[str, list[Scored]] = defaultdict(list)
     for s in test:
         if s.item.source.startswith("incident:"):
@@ -486,6 +558,7 @@ def render_markdown(
     lines.append(
         ", ".join(f"`{s.item.name}`" for s in sorted(misses, key=lambda s: s.item.name)) or "none"
     )
+    lines += _exposed_section(scored, shipped_threshold, in_snapshot)
 
     fps = sorted(
         (s for s in test if not s.item.malicious and s.score >= shipped_threshold),

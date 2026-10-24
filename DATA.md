@@ -23,6 +23,7 @@ README's Limitations section.
 | File | Rows | What | Label basis |
 |---|---|---|---|
 | `incidents.csv` | 639 | Names of malicious packages from documented incidents, with the package each one imitated, the incident id, year and source URL | Malicious per the cited source. The `target_basis` column says whether the imitated package was **stated** by the source, **inferred** by `scripts/build_incidents.py`, or **unknown**. |
+| `dev-exposed.txt` | 18 | Incident names that were visible during development (unit tests, demo fixtures, docstrings, rule examples) | Not a label. `squatwatch eval` moves these names out of the held-out test split and reports them separately. The rule and the guard test are described in the file header and DECISIONS.md. |
 | `benign-pypi.txt` | 3,000 | PyPI ranks 12,001–15,000 from the same pinned file (not in the snapshot) | *Assumed* benign because they are widely downloaded |
 | `benign-npm.txt` | 3,338 | npm high-impact ranks 14,001–17,338 (not in the snapshot) | *Assumed* benign (same caveat as the snapshot about gamed downloads) |
 

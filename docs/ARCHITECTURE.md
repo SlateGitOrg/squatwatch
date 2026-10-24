@@ -216,7 +216,10 @@ device entries are refused and reported (SW311). The single wrapper directory
 ## Evaluation (`evaluation.py`)
 
 - **Splits.** Salted SHA-256 assigns dev/test 50/50. Generated variants are split
-  *by target*, benign names by name, and every historical incident is test-only.
+  *by target*, benign names by name, and historical incidents are test-only,
+  except the development-exposed names in `data/eval/dev-exposed.txt`, which get
+  their own `exposed` split, are excluded from all metrics and are reported
+  separately.
 - **Sweep.** Thresholds from 0.40 to 0.90 are tried on dev only. The selection
   rule is the highest F1 subject to FPR ≤ 3%.
 - **Report.** Test metrics overall and per ecosystem/subset, recall by

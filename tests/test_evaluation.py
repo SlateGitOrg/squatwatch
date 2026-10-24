@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,8 @@ import pytest
 from squatwatch.checker import CheckerSettings, NameChecker
 from squatwatch.errors import DataError
 from squatwatch.evaluation import (
+    EXPOSED_FILE,
+    EXPOSED_SPLIT,
     MAX_DEV_FPR,
     TECHNIQUES,
     EvalItem,
@@ -19,6 +22,7 @@ from squatwatch.evaluation import (
     default_thresholds,
     generate_variants,
     load_benign,
+    load_exposed,
     load_incidents,
     metrics_at,
     render_markdown,
@@ -98,6 +102,55 @@ def test_loaders_and_errors(tmp_path: Path) -> None:
         load_incidents(bad)
     with pytest.raises(DataError):
         load_benign(tmp_path / "missing.txt", Ecosystem.NPM)
+    assert load_exposed(tmp_path / "missing.txt") == frozenset()
+    with pytest.raises(DataError):
+        load_exposed(tmp_path)  # a directory, not a file
+    listed = tmp_path / "exposed.txt"
+    listed.write_text("# header\ncrossenv   # reason\n\n")
+    assert load_exposed(listed) == {"crossenv"}
+    split = {
+        i.name: i.split for i in load_incidents(ROOT / "data/eval/incidents.csv", {"crossenv"})
+    }
+    assert split["crossenv"] == EXPOSED_SPLIT and split["colourama"] == "test"
+
+
+_DATA_PROVENANCE = ("src/squatwatch/data/", "src/squatwatch/hooks/")
+_SCANNED = (
+    "src/squatwatch/",
+    "tests/",
+    "examples/",
+    "scripts/demo.sh",
+    "scripts/build_archives.py",
+)
+
+
+def test_dev_exposed_list_is_complete() -> None:
+    """Every incident name that appears where it could shape the detector (code,
+    tests, fixtures, rule examples) must be in the exposed list, so it is never
+    counted as held out; and every listed name must be a real incident name."""
+    names = {i.name for i in load_incidents(ROOT / "data" / "eval" / "incidents.csv")}
+    exposed = load_exposed(ROOT / "data" / "eval" / EXPOSED_FILE)
+    assert exposed <= names
+    token = re.compile(r"[@\w][\w@/.\-]*")
+    files = [ROOT / "docs" / "RULES.md"]
+    for prefix in _SCANNED:
+        path = ROOT / prefix
+        files += sorted(p for p in path.rglob("*") if p.is_file()) if path.is_dir() else [path]
+    seen: dict[str, str] = {}
+    for f in files:
+        rel = f.relative_to(ROOT).as_posix()
+        if rel.startswith(_DATA_PROVENANCE) or "__pycache__" in rel:
+            continue
+        try:
+            text = f.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue  # fixture archives
+        for tok in token.findall(text):
+            for cand in (tok, tok.rstrip(".")):
+                if cand in names:
+                    seen.setdefault(cand, rel)
+    missing = {n: where for n, where in seen.items() if n not in exposed}
+    assert not missing, f"incident names used in development but not in {EXPOSED_FILE}: {missing}"
 
 
 def test_end_to_end_report(tmp_path: Path) -> None:
@@ -109,6 +162,7 @@ def test_end_to_end_report(tmp_path: Path) -> None:
     )
     (tmp_path / "benign-pypi.txt").write_text("flask-cors\n")
     (tmp_path / "benign-npm.txt").write_text("left-pad\n")
+    (tmp_path / EXPOSED_FILE).write_text("crossenv  # used in a test\n")
     indexes = {eco: PopularIndex.bundled(eco) for eco in Ecosystem}
     items = build_dataset(tmp_path, indexes)
     checkers = {eco: NameChecker(indexes[eco], CheckerSettings(min_score=0.0)) for eco in Ecosystem}
@@ -119,5 +173,8 @@ def test_end_to_end_report(tmp_path: Path) -> None:
         in_snapshot=lambda i: bool(i.target) and i.target in indexes[i.ecosystem],
     )
     assert "| demo | 2 | 50.0% |" in report
+    assert "demo2" not in report.split("## Development-exposed")[0]  # excluded from results
+    assert "| `crossenv` | demo2 |" in report
+    assert "| development-exposed only | 1 |" in report
     assert "`zzzzzz`" in report
     assert "Selection rule" in report
