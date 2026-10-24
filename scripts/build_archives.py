@@ -31,7 +31,7 @@ HEADER = "# INERT squatwatch detection fixture - not real malware, do not instal
 
 CLEAN_SETUP = (
     HEADER
-    + '''from setuptools import setup
+    + """from setuptools import setup
 
 setup(
     name="clean-sdist",
@@ -39,7 +39,7 @@ setup(
     packages=["clean_sdist"],
     install_requires=["requests>=2.31", "packaging"],
 )
-'''
+"""
 )
 
 HOOKED_SETUP = (

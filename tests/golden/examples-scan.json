@@ -1,0 +1,380 @@
+{
+  "errors": [],
+  "findings": [
+    {
+      "ecosystem": "npm",
+      "evidence": {
+        "resolved": "https://registry.npmjs.org/@acme/ui-kit/-/ui-kit-2.0.1.tgz",
+        "version": "2.0.1"
+      },
+      "location": {
+        "line": 15,
+        "path": "examples/webapp-js/package-lock.json"
+      },
+      "message": "@acme/ui-kit is declared internal but the lockfile resolved it from registry.npmjs.org; the installed artifact may be an attacker's public package",
+      "package": "@acme/ui-kit",
+      "rule": "SW203",
+      "severity": "critical",
+      "title": "internal package resolved from a public registry"
+    },
+    {
+      "ecosystem": "pypi",
+      "evidence": {
+        "resolved": "https://pypi.org/simple",
+        "version": "0.9.0"
+      },
+      "location": {
+        "line": 23,
+        "path": "examples/webapp-py/poetry.lock"
+      },
+      "message": "acme-auth is declared internal but the lockfile resolved it from pypi.org; the installed artifact may be an attacker's public package",
+      "package": "acme-auth",
+      "rule": "SW203",
+      "severity": "critical",
+      "title": "internal package resolved from a public registry"
+    },
+    {
+      "ecosystem": "pypi",
+      "evidence": {
+        "internal_version": "1.4.0",
+        "public_latest": "99.0.0",
+        "public_versions": [
+          "0.0.1",
+          "99.0.0"
+        ]
+      },
+      "location": {
+        "line": 10,
+        "path": "examples/webapp-py/requirements.txt"
+      },
+      "message": "acme-billing is declared internal but a public package of that name exists (public latest 99.0.0 outranks internal 1.4.0); a resolver that consults the public index may install it",
+      "package": "acme-billing",
+      "rule": "SW201",
+      "severity": "critical",
+      "title": "internal package name exists on the public registry"
+    },
+    {
+      "ecosystem": "npm",
+      "evidence": {
+        "signals": [
+          "scope: scope '@typess' imitates '@types' for '@types/node'",
+          "repetition: inserts 's' at 5 of '@types/node'"
+        ],
+        "target": "@types/node",
+        "target_rank": 147,
+        "techniques": [
+          "scope",
+          "repetition"
+        ]
+      },
+      "location": {
+        "line": 18,
+        "path": "examples/webapp-js/package.json"
+      },
+      "message": "'@typess/node' resembles popular npm package '@types/node' (popularity rank 147): scope: scope '@typess' imitates '@types' for '@types/node'; repetition: inserts 's' at 5 of '@types/node'",
+      "package": "@typess/node",
+      "rule": "SW104",
+      "score": 0.96,
+      "severity": "high",
+      "title": "possible typosquat of @types/node"
+    },
+    {
+      "ecosystem": "npm",
+      "evidence": {
+        "signals": [
+          "transposition: swaps 'sh' to 'hs' at 4 of 'lodash'"
+        ],
+        "target": "lodash",
+        "target_rank": 101,
+        "techniques": [
+          "transposition"
+        ]
+      },
+      "location": {
+        "line": 12,
+        "path": "examples/webapp-js/package.json"
+      },
+      "message": "'lodahs' resembles popular npm package 'lodash' (popularity rank 101): transposition: swaps 'sh' to 'hs' at 4 of 'lodash'",
+      "package": "lodahs",
+      "rule": "SW101",
+      "score": 0.78,
+      "severity": "high",
+      "title": "possible typosquat of lodash"
+    },
+    {
+      "ecosystem": "pypi",
+      "evidence": {
+        "signals": [
+          "transposition: swaps 'es' to 'se' at 3 of 'pytest'"
+        ],
+        "target": "pytest",
+        "target_rank": 24,
+        "techniques": [
+          "transposition"
+        ]
+      },
+      "location": {
+        "line": 3,
+        "path": "examples/webapp-py/requirements-dev.txt"
+      },
+      "message": "'pytset' resembles popular pypi package 'pytest' (popularity rank 24): transposition: swaps 'es' to 'se' at 3 of 'pytest'",
+      "package": "pytset",
+      "rule": "SW101",
+      "score": 0.84,
+      "severity": "high",
+      "title": "possible typosquat of pytest"
+    },
+    {
+      "evidence": {
+        "role": "extra",
+        "url": "https://pypi.acme.example/simple"
+      },
+      "location": {
+        "line": 2,
+        "path": "examples/webapp-py/requirements.txt"
+      },
+      "message": "index https://pypi.acme.example/simple is consulted alongside the default index (role 'extra'); pip-style resolvers take the highest version from any index, so a public package can shadow a private one. Use a single proxying index or uv's first-index strategy.",
+      "rule": "SW204",
+      "severity": "high",
+      "title": "package indexes are merged (dependency-confusion prone)"
+    },
+    {
+      "ecosystem": "pypi",
+      "evidence": {
+        "signals": [
+          "homoglyph: renders like 'jellyfish' ('I' for 'l')"
+        ],
+        "target": "jellyfish",
+        "target_rank": 1245,
+        "techniques": [
+          "homoglyph"
+        ]
+      },
+      "location": {
+        "line": 7,
+        "path": "examples/webapp-py/requirements.txt"
+      },
+      "message": "'jeIlyfish' resembles popular pypi package 'jellyfish' (popularity rank 1245): homoglyph: renders like 'jellyfish' ('I' for 'l')",
+      "package": "jeIlyfish",
+      "rule": "SW102",
+      "score": 0.9,
+      "severity": "high",
+      "title": "possible typosquat of jellyfish"
+    },
+    {
+      "ecosystem": "pypi",
+      "evidence": {
+        "signals": [
+          "insertion: inserts '3' at 6 of 'python-dateutil'",
+          "combo: uses 'python3' instead of 'python' in 'python-dateutil'"
+        ],
+        "target": "python-dateutil",
+        "target_rank": 14,
+        "techniques": [
+          "insertion",
+          "combo"
+        ]
+      },
+      "location": {
+        "line": 6,
+        "path": "examples/webapp-py/requirements.txt"
+      },
+      "message": "'python3-dateutil' resembles popular pypi package 'python-dateutil' (popularity rank 14): insertion: inserts '3' at 6 of 'python-dateutil'; combo: uses 'python3' instead of 'python' in 'python-dateutil'",
+      "package": "python3-dateutil",
+      "rule": "SW101",
+      "score": 0.81,
+      "severity": "high",
+      "title": "possible typosquat of python-dateutil"
+    },
+    {
+      "ecosystem": "pypi",
+      "evidence": {
+        "signals": [
+          "transposition: swaps 'ue' to 'eu' at 3 of 'requests'"
+        ],
+        "target": "requests",
+        "target_rank": 7,
+        "techniques": [
+          "transposition"
+        ]
+      },
+      "location": {
+        "line": 5,
+        "path": "examples/webapp-py/requirements.txt"
+      },
+      "message": "'reqeusts' resembles popular pypi package 'requests' (popularity rank 7): transposition: swaps 'ue' to 'eu' at 3 of 'requests'",
+      "package": "reqeusts",
+      "rule": "SW101",
+      "score": 0.84,
+      "severity": "high",
+      "title": "possible typosquat of requests"
+    },
+    {
+      "ecosystem": "npm",
+      "location": {
+        "line": 13,
+        "path": "examples/webapp-js/package.json"
+      },
+      "message": "@acme/ui-kit does not exist on the public npm registry; anyone can register it. Reserve the name or pin the private index.",
+      "package": "@acme/ui-kit",
+      "rule": "SW202",
+      "severity": "medium",
+      "title": "internal package name is unclaimed on the public registry"
+    },
+    {
+      "ecosystem": "npm",
+      "evidence": {
+        "scope": "@acme"
+      },
+      "location": {
+        "line": 13,
+        "path": "examples/webapp-js/package.json"
+      },
+      "message": "no .npmrc maps @acme:registry=..., so packages such as @acme/ui-kit resolve from the default registry",
+      "package": "@acme/ui-kit",
+      "rule": "SW205",
+      "severity": "medium",
+      "title": "internal npm scope is not mapped to a private registry"
+    },
+    {
+      "ecosystem": "npm",
+      "evidence": {
+        "signals": [
+          "separator: drops '-' at 5 of 'cross-env'"
+        ],
+        "target": "cross-env",
+        "target_rank": 1931,
+        "techniques": [
+          "separator"
+        ]
+      },
+      "location": {
+        "line": 11,
+        "path": "examples/webapp-js/package.json"
+      },
+      "message": "'crossenv' resembles popular npm package 'cross-env' (popularity rank 1931): separator: drops '-' at 5 of 'cross-env'",
+      "package": "crossenv",
+      "rule": "SW103",
+      "score": 0.7,
+      "severity": "medium",
+      "title": "possible typosquat of cross-env"
+    },
+    {
+      "ecosystem": "npm",
+      "evidence": {
+        "signals": [
+          "keyboard: replaces 't' with 'g' at 5 of 'eslint'"
+        ],
+        "target": "eslint",
+        "target_rank": 167,
+        "techniques": [
+          "keyboard"
+        ]
+      },
+      "location": {
+        "line": 19,
+        "path": "examples/webapp-js/package.json"
+      },
+      "message": "'esling' resembles popular npm package 'eslint' (popularity rank 167): keyboard: replaces 't' with 'g' at 5 of 'eslint'",
+      "package": "esling",
+      "rule": "SW101",
+      "score": 0.74,
+      "severity": "medium",
+      "title": "possible typosquat of eslint"
+    },
+    {
+      "ecosystem": "npm",
+      "evidence": {
+        "signals": [
+          "repetition: inserts 'd' at 7 of 'left-pad'"
+        ],
+        "target": "left-pad",
+        "target_rank": 5550,
+        "techniques": [
+          "repetition"
+        ]
+      },
+      "location": {
+        "line": 14,
+        "path": "examples/webapp-js/package.json"
+      },
+      "message": "'left-padd' resembles popular npm package 'left-pad' (popularity rank 5550): repetition: inserts 'd' at 7 of 'left-pad' (declared in 2 places)",
+      "package": "left-padd",
+      "rule": "SW101",
+      "score": 0.66,
+      "severity": "medium",
+      "title": "possible typosquat of left-pad"
+    },
+    {
+      "ecosystem": "pypi",
+      "location": {
+        "line": 23,
+        "path": "examples/webapp-py/poetry.lock"
+      },
+      "message": "acme-auth does not exist on the public pypi registry; anyone can register it. Reserve the name or pin the private index.",
+      "package": "acme-auth",
+      "rule": "SW202",
+      "severity": "medium",
+      "title": "internal package name is unclaimed on the public registry"
+    },
+    {
+      "ecosystem": "pypi",
+      "evidence": {
+        "signals": [
+          "insertion: inserts 'u' at 4 of 'colorama'"
+        ],
+        "target": "colorama",
+        "target_rank": 112,
+        "techniques": [
+          "insertion"
+        ]
+      },
+      "location": {
+        "line": 6,
+        "path": "examples/webapp-py/pyproject.toml"
+      },
+      "message": "'colourama' resembles popular pypi package 'colorama' (popularity rank 112): insertion: inserts 'u' at 4 of 'colorama'",
+      "package": "colourama",
+      "rule": "SW101",
+      "score": 0.7,
+      "severity": "medium",
+      "title": "possible typosquat of colorama"
+    },
+    {
+      "ecosystem": "npm",
+      "evidence": {
+        "scripts": {
+          "postinstall": "node scripts/postinstall.js"
+        }
+      },
+      "location": {
+        "line": null,
+        "path": "examples/webapp-js/package.json"
+      },
+      "message": "package.json runs scripts at install: postinstall: node scripts/postinstall.js",
+      "package": "@acme/webapp",
+      "rule": "SW307",
+      "severity": "info",
+      "title": "install-time lifecycle scripts"
+    }
+  ],
+  "schema": 1,
+  "summary": {
+    "by_severity": {
+      "critical": 3,
+      "high": 7,
+      "info": 1,
+      "low": 0,
+      "medium": 7
+    },
+    "dependencies": 32,
+    "errors": 0,
+    "fail_on": "high",
+    "files": 7,
+    "findings": 18
+  },
+  "tool": {
+    "name": "squatwatch",
+    "version": "<version>"
+  }
+}
