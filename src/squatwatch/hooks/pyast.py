@@ -8,9 +8,14 @@ The analyser works in three passes over the ``ast``:
    dotted names such as ``subprocess.run`` or ``urllib.request.urlopen``.
 2. **Reachability** — module-level statements run whenever the build imports the
    file. Methods of classes deriving from setuptools/distutils commands
-   (``install``, ``develop``, ``egg_info``...) run at install time. Functions
-   called (by plain name) from either, transitively, are reachable too. Anything
-   else is "unreferenced" and its findings are reported one severity lower.
+   (``install``, ``develop``, ``egg_info``...) run at install time. In an in-tree
+   PEP 517 backend the hook functions (``build_wheel``, ``build_sdist``,
+   ``build_editable``, ``get_requires_for_build_*``, ``prepare_metadata_for_build_*``)
+   are entry points too, because the build frontend calls them by contract;
+   functions bound to a hook name (``build_wheel = _impl``) count as hooks.
+   Functions called (by plain name) from any of these, transitively, are
+   reachable too. Anything else is "unreferenced" and its findings are reported
+   one severity lower.
 3. **Capabilities** — each call/attribute is matched against catalogues of
    network, process, dynamic-code, environment, credential-path and decoding
    APIs. ``exec``/``eval`` over decoded data is escalated to critical.
@@ -119,6 +124,19 @@ COMMAND_BASES = frozenset(
         "Command",
     }
 )
+#: PEP 517 (and PEP 660 editable) hooks a build frontend calls on a backend.
+BACKEND_HOOKS = frozenset(
+    {
+        "build_wheel",
+        "build_sdist",
+        "build_editable",
+        "get_requires_for_build_wheel",
+        "get_requires_for_build_sdist",
+        "get_requires_for_build_editable",
+        "prepare_metadata_for_build_wheel",
+        "prepare_metadata_for_build_editable",
+    }
+)
 _BLOB = re.compile(r"^[A-Za-z0-9+/=_\-\s]{256,}$")
 
 
@@ -172,6 +190,25 @@ def _calls_in(nodes: Iterable[ast.AST]) -> set[str]:
     return names
 
 
+def _backend_hooks(tree: ast.Module) -> set[str]:
+    """Names of functions a build frontend calls on this backend module: the PEP
+    517/660 hook names plus any function bound to one at module level
+    (``build_wheel = _impl``)."""
+    names = set(BACKEND_HOOKS)
+    for stmt in tree.body:
+        if isinstance(stmt, ast.Assign) and isinstance(stmt.value, ast.Name):
+            if any(isinstance(t, ast.Name) and t.id in BACKEND_HOOKS for t in stmt.targets):
+                names.add(stmt.value.id)
+        elif (
+            isinstance(stmt, ast.AnnAssign)
+            and isinstance(stmt.target, ast.Name)
+            and stmt.target.id in BACKEND_HOOKS
+            and isinstance(stmt.value, ast.Name)
+        ):
+            names.add(stmt.value.id)
+    return names
+
+
 class _Reachability:
     """Computes the execution context of every function body in a module."""
 
@@ -199,6 +236,8 @@ class _Reachability:
             else:
                 top_level.append(stmt)
         self._propagate(_calls_in(top_level), entry_context)
+        if entry_context == "build-backend":
+            self._propagate(_backend_hooks(tree), "build-backend")
         self._propagate(_calls_in(hook_methods), "install-hook")
 
     @staticmethod

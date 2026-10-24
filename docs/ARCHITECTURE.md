@@ -174,8 +174,12 @@ HTTPS only.
 2. **Reachability.** Module-level statements (and class bodies) run when the
    build imports the file. Methods of classes whose base is a
    setuptools/distutils command (`install`, `develop`, `egg_info`, `build_py`...)
-   run at install time. Calls by plain name (or `self.method`) from either are
-   followed to a fixpoint over the module's functions. Everything else is
+   run at install time. In an in-tree PEP 517 backend, the hook functions the
+   build frontend calls by contract (`build_wheel`, `build_sdist`,
+   `build_editable`, `get_requires_for_build_*`, `prepare_metadata_for_build_*`,
+   plus any function bound to one of those names at module level) are entry
+   points in the `build-backend` context. Calls by plain name (or `self.method`)
+   from any entry point are followed to a fixpoint over the module's functions. Everything else is
    "unreferenced" and reported one severity lower. Nested definitions inherit
    their parent's context.
 3. **Capabilities.** Catalogues of network, process, dynamic-code, decoding,
