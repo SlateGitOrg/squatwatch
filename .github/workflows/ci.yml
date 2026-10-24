@@ -1,0 +1,44 @@
+# Runs the same single gate as local development (`make check`), plus the
+# offline demo. Not yet executed on GitHub: the repository has not been pushed.
+name: CI
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.28"
+      - name: Install Python 3.12
+        run: uv python install 3.12
+      - name: Format, lint, type-check, fixture check, tests + coverage gate
+        run: make check
+      - name: Offline demo
+        run: make demo
+
+  self-scan:
+    # Dogfood: squatwatch scans its own manifests and fails the build on high findings.
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.28"
+      - run: uv python install 3.12 && uv sync --frozen
+      - name: Scan this repository's own dependencies
+        run: uv run --frozen squatwatch scan pyproject.toml uv.lock --format sarif -o squatwatch.sarif
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: squatwatch-sarif
+          path: squatwatch.sarif

@@ -1,0 +1,50 @@
+# Decisions
+
+Format: `- Ruling: <what> — <why> — <cost if wrong>`.
+
+## Scope and data
+
+- Ruling: snapshot sizes are PyPI top 12,000 and npm high-impact top 14,000; the next ~3,000 names per ecosystem become the benign evaluation set. — The names just below the cutoff are real, widely used packages that the detector has never seen, which makes them a realistic false-positive test. Small enough to commit (0.4 MB). — Squats of packages ranked below the cutoff are not detected (e.g. `capmonstercloudclient` in the 2024 campaign).
+- Ruling: commit only names and rank from hugovk/top-pypi-packages (the repository has no licence file), and fetch through a pinned commit plus SHA-256. — Package names are public registry facts. Dropping download counts minimises what is redistributed. — If the owner objects, the snapshot must be regenerated from a user's own BigQuery export.
+- Ruling: all historical incident names are held out in the test split, and none were used to choose weights or the threshold. — Honest evaluation. — Fewer labelled real-world examples to learn from.
+- Ruling: Phylum 2024 campaign targets are inferred as the nearest named target by case-folded OSA, independent of squatwatch's snapshot. — The source gives no per-package target. Using a different procedure from the detector avoids circular labels. — Some "target correct" numbers for that incident rest on inferred labels.
+- Ruling: npm 2017 "hacktask" names keep the source's list verbatim, including names whose target is not a popular npm package (`tkinter`, `smb`) and `mariadb`, which is now legitimate. — Selecting only the names the tool can catch would inflate recall. — Recall for that incident is low, and the README explains why.
+- Ruling: pnpm-lock.yaml and Pipenv `Pipfile` (not the lock) are out of scope for v1. — YAML would need a new dependency, and `Pipfile.lock` already carries the resolved index. — pnpm users get manifest-level checks only.
+
+## Algorithms
+
+- Ruling: use restricted Damerau-Levenshtein (optimal string alignment) instead of unrestricted DL. — It matches the one-slip-per-character typo model, it allows a banded early-exit implementation (O(k·n)), and it differs from unrestricted DL only when an edited substring is edited again. — Pairs such as `ca`/`abc` count as distance 3 instead of 2 and can be missed at budget 2.
+- Ruling: find candidates with a numpy character-count L1 filter (`L1/2 ≤ OSA`) instead of a SymSpell deletion index or BK-tree. — A measured prototype of the deletion index used about 130 MB and took 2.7 s to build for PyPI at d≤2 (minutes for npm). The count filter costs 0.25 ms per query, needs no index build beyond a 1 MB matrix, and is provably lossless. A property test checks it against brute force. — Still a linear scan per query (O(N·Σ) vectorised), so it would need a smarter index for snapshots 10× larger.
+- Ruling: edit budget is 0 for names under 4 characters, 1 for 4–7, and 2 from 8 up. — Short names collide by accident. Two edits on long names is common in real campaigns (`tensoflw`). — Two-edit squats of 4–7 character names are missed.
+- Ruling: technique weights are fixed constants. They were set by hand from typo-model reasoning and adjusted only against dev-split numbers (generated variants plus benign tail). — Transparent and explainable per finding. — Not optimal. A learned model could do better with more labelled data.
+- Ruling: a scoped npm name whose scope already owns popular packages is never reported as a squat. — npm only lets a scope's owner publish inside it, so `@babel/anything` cannot be a third-party squat. This removed scope-adjacent false positives such as `@aws-cdk/core` vs `@aws-sdk/core` on dev. — A compromised scope owner is out of scope (that is account takeover, not squatting).
+- Ruling: signals from the same family (e.g. `separator` and `scope-flatten`, or `edit-2` made only of separator edits) do not stack. Only distinct families earn the +0.05 bonus. — On dev, legitimate packages that moved into scopes (`rollup-plugin-json` → `@rollup/plugin-json`) were double-counted. — Rare genuine squats that combine two layout tricks score slightly lower.
+- Ruling: digit-only edits at the end of a name (`smbus`/`smbus2`, `pypdf2`/`pypdf3`) are a separate low-weight technique, `version-digit` (0.50). — Version-suffixed forks are extremely common among legitimate packages (dev FPs). — Squats that only add or drop a trailing digit (`urllib` for `urllib3`) score lower. The rank bonus still lifts the most popular targets over the threshold.
+- Ruling: reporting threshold `min-score = 0.60`, chosen by the rule "highest dev F1 with dev FPR ≤ 3%". — On a balanced set, F1 alone picks 0.50 (dev FPR 6.6%), which would swamp real manifests where squats are rare. The FPR cap encodes that base-rate argument. — Lower recall than an F1-only choice. Users can lower `min-score`.
+- Ruling: severity bands are HIGH ≥ 0.75 and MEDIUM ≥ 0.65 (else LOW), and the default CI gate is `fail-on = high`. — At 0.75 the dev FPR is 0.1%, so the default gate fails only on confident hits. — MEDIUM-only squats such as `crossenv` (0.70) do not fail CI by default. Teams wanting stricter gates set `fail-on = "medium"`.
+
+## Evaluation process (disclosure)
+
+- Ruling: disclose that the first evaluation run (v1) printed held-out test results before the generator and weights were revised. — v1 showed that the generator lacked random substitution and double-edit families. They were added, and weights were re-chosen on dev only, but the change was motivated by looking at test misses. — Test numbers may be slightly optimistic. v1 test numbers for comparison: all-test precision 96.4%, recall 90.8%, FPR 3.7%; incidents-only recall 49.0% (current: 49.5%). The incident recall barely moved, which suggests little overfitting.
+- Ruling: report recall on generated variants separately from incidents, and call it a regression check. — The generator and detector share technique families, so it is partly circular. — None. The README leads with the incident numbers.
+
+## Dependency confusion
+
+- Ruling: uv indexes (and `extra-index-url` under uv) are treated as `priority`, not merged, unless `index-strategy = "unsafe-best-match"`. — uv's default `first-index` strategy stops at the first index that has the package, which defeats dependency confusion. — If uv's defaults change, findings would be missed until this is updated.
+- Ruling: Poetry `supplemental`/`secondary` sources count as merging (SW204). — Packages missing from the primary source are looked up there, so an internal name squatted on PyPI resolves from PyPI first. — Possible false positives on setups where the primary source is a private proxy.
+- Ruling: the live HTTP registry client exists, but it only runs with `--online`. Tests use a fake transport and the demo uses a JSON fixture. — The contract forbids network access in tests and demo. Users still get a real implementation. — The live path is not exercised by CI (only through the fake transport).
+- Ruling: the default HTTP transport refuses non-HTTPS URLs. — Prevents `file:` or other surprises from a misconfigured base URL. — None.
+
+## Build-hook review
+
+- Ruling: JavaScript is reviewed with a tokenizer plus token-window patterns, not a full JS parser. — No mature pure-Python JS parser is pinned and maintained here, and comments and strings are what cause naive grep false positives. The tokenizer handles those. — Aliased or obfuscated calls (`const x = require; x("child_process")`) evade it. This is documented.
+- Ruling: findings in code that is not proven to run at install time (unreferenced functions) are reported one severity lower, not dropped. — Reachability via plain-name calls is approximate (no dynamic dispatch). — Some noise from dead helper code in legitimate setup.py files.
+- Ruling: `exec(open(...).read())` is LOW, not MEDIUM. — It is the common idiom for reading a version file in setup.py. — An attacker could hide a payload in a file read this way. The decode-then-exec pattern is still CRITICAL.
+- Ruling: archives are never extracted to disk. Members are read in memory with limits of 20,000 members, 2 MB per file and 64 MB total, and links, devices and path-traversal entries are refused and reported (SW311). — The tool reads untrusted archives. — Very large legitimate packages may have some files skipped (logged).
+- Ruling: the benign fixture archives are committed *and* regenerated deterministically. `make check` verifies the bytes match. — The demo and tests need stable inputs, and reviewers can audit the generator. — None.
+
+## Engineering
+
+- Ruling: runtime dependencies are only `numpy` (count filter) and `packaging` (PEP 508/440). — Small, pinned, widely audited. — None.
+- Ruling: CLI exit codes are 0 clean, 1 findings at/above `--fail-on`, 2 usage error, 3 input errors (unless `--ignore-errors`), 4 internal error. Findings take precedence over input errors. — Lets CI tell "found something" apart from "could not check". — None.
+- Ruling: there is no `.env.example`. — squatwatch reads no environment variables. Configuration is `squatwatch.toml` or `[tool.squatwatch]`. — None.
