@@ -23,6 +23,7 @@ from pathlib import Path
 from squatwatch import __version__
 from squatwatch.checker import CheckerSettings, NameChecker
 from squatwatch.config import Config, load_config
+from squatwatch.confusion import InternalPolicy
 from squatwatch.errors import SquatwatchError
 from squatwatch.evaluation import build_dataset, render_markdown, score_items
 from squatwatch.hooks.review import review_path
@@ -161,7 +162,7 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         config.hooks = False
     if args.internal or args.internal_scope:
         policy = config.internal
-        config.internal = type(policy)(
+        config.internal = InternalPolicy(
             names=policy.names | frozenset(args.internal),
             patterns=policy.patterns,
             npm_scopes=policy.npm_scopes + tuple(args.internal_scope),

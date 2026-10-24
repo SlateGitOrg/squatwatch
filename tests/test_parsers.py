@@ -506,3 +506,14 @@ def test_parser_dispatch_and_discovery(tmp_path: Path) -> None:
     assert parse_file(tmp_path / "notes.txt") is None
     parsed = parse_file(tmp_path / "requirements.txt")
     assert parsed is not None and parsed.ecosystem is Ecosystem.PYPI
+
+
+def test_non_ascii_names_survive_every_python_parser(tmp_path: Path) -> None:
+    pyproject = parse_pyproject_text('[project]\ndependencies = ["rеquests>=2"]\n', "p.toml")
+    assert [d.name for d in pyproject.dependencies] == ["rеquests"] and not pyproject.errors
+    setup = parse_setup_source(
+        "from setuptools import setup\nsetup(install_requires=['rеquests'])\n", "s.py"
+    )
+    assert [d.name for d in setup.dependencies] == ["rеquests"] and not setup.errors
+    req = parse_requirements(write(tmp_path / "requirements.txt", "rеquests==2.0\n"))
+    assert [d.name for d in req.dependencies] == ["rеquests"] and not req.errors
