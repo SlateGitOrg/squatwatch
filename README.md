@@ -68,7 +68,7 @@ flowchart LR
     R[RegistryClient<br/>fixture JSON · HTTPS] --> C
     A --> T[ArchiveTree<br/>in-memory, bounded]
     M --> H
-    T --> H[hook reviewers<br/>Python AST · shell · JS tokens]
+    T --> H[hook analyzers<br/>Python AST · shell · JS tokens]
     N & C & H --> F[findings]
     F --> O[text · JSON · SARIF<br/>exit 0/1/2/3/4]
 ```
