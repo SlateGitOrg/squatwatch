@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Typosquat and dependency-confusion detector for npm and PyPI manifests, lockfiles and package archives."
 readme = "README.md"
 license = "MIT"
-authors = [{ name = "archit2501" }]
+authors = [{ name = "squatwatch contributors" }]
 requires-python = ">=3.12"
 dependencies = [
     "numpy==2.3.4",

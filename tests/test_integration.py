@@ -277,7 +277,7 @@ def test_cli_check_review_snapshot(capsys: pytest.CaptureFixture[str]) -> None:
     code, out, _ = run(capsys, "review", str(EXAMPLES / "archives" / "inert-npm-fixture-0.1.0.tgz"))
     assert code == EXIT_FINDINGS and "SW310" in out
     code, out, _ = run(capsys, "snapshot")
-    assert code == EXIT_OK and "pypi: 12000 names" in out
+    assert code == EXIT_OK and "pypi: 11999 names" in out
 
 
 def test_cli_usage_and_internal_errors(

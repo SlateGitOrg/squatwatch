@@ -9,7 +9,7 @@ committed data is about 0.6 MB.
 
 | File | What | Source | Pinned by | Licence |
 |---|---|---|---|---|
-| `src/squatwatch/data/popular-pypi.txt` | PyPI projects ranked 1–12,000 by 30-day downloads | [hugovk/top-pypi-packages](https://github.com/hugovk/top-pypi-packages), file `top-pypi-packages.min.json` at commit `e6b5b398c1fcc783f593031f99bc2c772d64c6ef` (data dated 2026-10-01) | SHA-256 `55fee05ed02b628f05350a51780ec436efae39ea0810df5d5419e15b850c7041` | The repository has no licence file. Only the project names and their order are kept (no download counts). Package names are public registry facts. If this matters for your use, regenerate from your own BigQuery export. |
+| `src/squatwatch/data/popular-pypi.txt` | PyPI projects ranked 1–12,000 by 30-day downloads (minus one name dropped from the committed list) | [hugovk/top-pypi-packages](https://github.com/hugovk/top-pypi-packages), file `top-pypi-packages.min.json` at commit `e6b5b398c1fcc783f593031f99bc2c772d64c6ef` (data dated 2026-10-01) | SHA-256 `55fee05ed02b628f05350a51780ec436efae39ea0810df5d5419e15b850c7041` | The repository has no licence file. Only the project names and their order are kept (no download counts). Package names are public registry facts. If this matters for your use, regenerate from your own BigQuery export. |
 | `src/squatwatch/data/popular-npm.txt` | npm packages ranked 1–14,000 in npm's "high-impact" list (≥1M weekly downloads or ≥500 dependents) | [`npm-high-impact@1.13.0`](https://www.npmjs.com/package/npm-high-impact) by Titus Wormer, file `lib/top.js` | SHA-256 of the tarball `63ed31dacc861ac10c95b47af242a984f210f0170eaea8eaa66ba4a9b8f9d30b` | MIT |
 
 Regenerate both with `make snapshot` (`scripts/fetch_popular.py`). It needs network

@@ -254,11 +254,22 @@ at the end). Tests include Hypothesis property tests (banded OSA vs an
 independent oracle, edit scripts reproduce the target, index filter equals brute
 force), a golden JSON report for the demo scan, CLI exit-code tests and a fake
 HTTP transport for the registry client. `.github/workflows/ci.yml` runs the same
-gate plus the demo and a self-scan; it has not run on GitHub yet because the
-repository has not been pushed.
+gate plus the demo and a self-scan.
 
 Size: `find src -name '*.py' | xargs wc -l` → 6,122 lines (including docstrings
 and blank lines); `find tests -name '*.py' | xargs wc -l` → 2,093 lines.
+
+## Project layout
+
+```
+src/squatwatch/   checker, parsers/, hooks/, text/ (distance, homoglyph, keyboard), registry, report, cli
+src/squatwatch/data/   popularity snapshots (PyPI, npm)
+tests/            unit, property, golden-report and CLI tests
+examples/         demo organisation: manifests, lockfiles, inert fixture archives
+eval/, data/eval/ evaluation harness inputs and RESULTS.md
+docs/             ARCHITECTURE, RULES, THREAT_MODEL
+scripts/          bench, demo, snapshot and fixture builders
+```
 
 ## Design decisions (summary)
 
@@ -314,4 +325,4 @@ Full list with trade-offs: [DECISIONS.md](DECISIONS.md).
 
 ## License
 
-MIT © archit2501. Bundled data licences are listed in [DATA.md](DATA.md).
+MIT — see [LICENSE](LICENSE). Bundled data licences are listed in [DATA.md](DATA.md).
