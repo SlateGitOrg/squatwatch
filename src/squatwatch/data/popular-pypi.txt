@@ -3,7 +3,7 @@
 # source: https://raw.githubusercontent.com/hugovk/top-pypi-packages/e6b5b398c1fcc783f593031f99bc2c772d64c6ef/top-pypi-packages.min.json
 # source-sha256: 55fee05ed02b628f05350a51780ec436efae39ea0810df5d5419e15b850c7041
 # licence: no licence file; names only
-# ranks: 1-12000
+# ranks: 1-12000 (one name dropped; ranks after about 2511 are off by one)
 boto3
 packaging
 typing-extensions

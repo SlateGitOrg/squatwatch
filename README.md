@@ -25,7 +25,7 @@ organisation's *internal* package names on the public registry with a huge
 version number (dependency confusion), and run their payload from install hooks
 before anyone imports anything. squatwatch checks a repository for all three:
 
-1. **Typosquat name signals** against a bundled snapshot of the 12,000 most
+1. **Typosquat name signals** against a bundled snapshot of about 12,000 of the most
    downloaded PyPI projects and the 14,000 npm "high-impact" packages:
    restricted Damerau-Levenshtein edits, keyboard adjacency, homoglyphs
    (`I`/`l`, `0`/`o`, Cyrillic), separator and word-order tricks, npm scope tricks
@@ -62,7 +62,7 @@ flowchart LR
     M & L --> P[parsers]
     P --> D[(dependencies + index settings)]
     D --> N[NameChecker]
-    S[(popularity snapshot<br/>PyPI 12k · npm 14k)] --> I[PopularIndex<br/>count-filter + OSA]
+    S[(popularity snapshot<br/>PyPI ~12k · npm 14k)] --> I[PopularIndex<br/>count-filter + OSA]
     I --> N
     D --> C[ConfusionChecker]
     R[RegistryClient<br/>fixture JSON · HTTPS] --> C
@@ -238,7 +238,7 @@ Command: `make bench` (`scripts/bench.py`), Python 3.12.13, Apple-silicon laptop
 
 | ecosystem | snapshot | index load | names/s (benign names, mostly no match) | p50 / p95 per name | candidate search vs brute force |
 |---|---|---|---|---|---|
-| PyPI | 12,000 | 112 ms | 3,013 | 0.29 / 0.48 ms | 0.36 vs 12.1 ms/query (34×) |
+| PyPI | 11,999 | 112 ms | 3,013 | 0.29 / 0.48 ms | 0.36 vs 12.1 ms/query (34×) |
 | npm | 14,000 | 179 ms | 2,946 | 0.33 / 1.10 ms | 0.34 vs 12.2 ms/query (35×) |
 
 The speed-up comes from a lossless character-count filter
@@ -249,15 +249,15 @@ The speed-up comes from a lossless character-count filter
 
 `make check` = `ruff format --check` + `ruff check` (zero warnings) + `mypy --strict`
 + fixture-archive reproducibility + `pytest` with a branch-coverage gate (85%).
-Current: **175 tests, 96% branch coverage** (`make check`, coverage table printed
+Current: **177 tests, 96.5% branch coverage** (`make check`, coverage table printed
 at the end). Tests include Hypothesis property tests (banded OSA vs an
 independent oracle, edit scripts reproduce the target, index filter equals brute
 force), a golden JSON report for the demo scan, CLI exit-code tests and a fake
 HTTP transport for the registry client. `.github/workflows/ci.yml` runs the same
 gate plus the demo and a self-scan.
 
-Size: `find src -name '*.py' | xargs wc -l` → 6,122 lines (including docstrings
-and blank lines); `find tests -name '*.py' | xargs wc -l` → 2,093 lines.
+Size: `find src -name '*.py' | xargs wc -l` → 6,235 lines (including docstrings
+and blank lines); `find tests -name '*.py' | xargs wc -l` → 2,186 lines.
 
 ## Project layout
 
